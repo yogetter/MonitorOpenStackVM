@@ -1,0 +1,6 @@
+{
+    "Url": "http://172.22.131.70:8086",
+    "Db": "telegraf",
+    "Username": "admin",
+    "Password": "admin"
+}
