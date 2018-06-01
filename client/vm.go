@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	libvirt "github.com/libvirt/libvirt-go"
+	"strconv"
 	"strings"
 )
 
@@ -12,7 +13,7 @@ type instance struct {
 	MemTotal   int64
 	MemUnUsed  int64
 	MemUsed    int64
-	CpuUsage   float32
+	CpuUsage   float64
 	CpuTime    uint64
 	VcpuNumber int
 	NetStats   []libvirt.DomainStatsNet
@@ -38,8 +39,8 @@ func (s *instance) SetVcpuNumber() {
 	s.VcpuNumber = len(Vcpu)
 }
 
-func (s *instance) SetCpuValue(Cpu *libvirt.DomainStatsCPU) {
-	s.CpuTime = Cpu.Time
+func (s *instance) SetCpuValue(CpuTime uint64) {
+	s.CpuTime = CpuTime
 }
 
 func (s *instance) SetMemValue() {
@@ -63,22 +64,38 @@ func (s *instance) SetInterfaceValue(Net []libvirt.DomainStatsNet) {
 	s.NetStats = Net
 }
 
-func (s instance) GetValue() {
+func (s instance) GetValue() []string {
+	var data []string
+	for _, Block := range s.BlockStats {
+		tmpData := "Uuid:" + s.Id + ";" + "Name:" + s.Name + ";" + "MemTotal:" + strconv.FormatInt(s.MemTotal, 10) +
+			";" + "MemUsed:" + strconv.FormatInt(s.MemUsed, 10) + ";" + "MemUnUsed:" + strconv.FormatInt(s.MemUnUsed, 10) +
+			";" + "CPU:" + strconv.FormatFloat(s.CpuUsage, 'f', -1, 64) + ";" + "Rx:" + strconv.FormatUint(s.NetStats[0].RxBytes, 10) +
+			";" + "Tx:" + strconv.FormatUint(s.NetStats[0].TxBytes, 10) + ";" + "BkWr:" + strconv.FormatUint(Block.WrBytes, 10) +
+			";" + "BkRd:" + strconv.FormatUint(Block.RdBytes, 10)
+		data = append(data, tmpData)
+	}
+	return data
+
+}
+
+func (s instance) PrintValue() {
 	fmt.Println("VM：")
 	fmt.Println("Uuid: ", s.Id)
 	fmt.Println("Name: ", s.Name)
-	fmt.Println("MemTotal: ", s.MemTotal)
-	fmt.Println("MemUsed: ", s.MemUsed)
-	fmt.Println("MemUnUsed: ", s.MemUnUsed)
+	fmt.Println("MemTotal: ", strconv.FormatInt(s.MemTotal, 10))
+	fmt.Println("MemUsed: ", strconv.FormatInt(s.MemUsed, 10))
+	fmt.Println("MemUnUsed: ", strconv.FormatInt(s.MemUnUsed, 10))
+	fmt.Println("CPU: ", strconv.FormatFloat(s.CpuUsage, 'f', -1, 64))
 	fmt.Println("CPU: ", s.CpuUsage)
 	fmt.Println("VcpuNumber: ", s.VcpuNumber)
 	fmt.Println("BlockStats: ", s.BlockStats)
 	fmt.Println("NetStats: ", s.NetStats)
-}
 
+}
 func (s *instance) SetAllValue(tmp instance) {
 	usedTime := (s.CpuTime - tmp.CpuTime) / 1000
-	s.CpuUsage = float32(usedTime) / float32((60 * 1000000 * s.VcpuNumber))
+	fmt.Println("start:", s.CpuTime, "end:", tmp.CpuTime, "result:", usedTime)
+	s.CpuUsage = float64(usedTime) / float64((60 * 1000000 * s.VcpuNumber))
 	s.CpuUsage *= 100
 	s.NetStats[0].RxBytes = (s.NetStats[0].RxBytes - tmp.NetStats[0].RxBytes) / 60
 	s.NetStats[0].TxBytes = (s.NetStats[0].TxBytes - tmp.NetStats[0].TxBytes) / 60
@@ -89,11 +106,13 @@ func (s *instance) SetAllValue(tmp instance) {
 }
 
 func (s *instance) InitAllValue(dom *libvirt.Domain, domStats []libvirt.DomainStats) {
+	DomInfo, err := dom.GetInfo()
+	CheckError(err)
 	s.dom = dom
 	s.SetVcpuNumber()
 	s.GetName()
 	s.SetMemValue()
-	s.SetCpuValue(domStats[0].Cpu)
+	s.SetCpuValue(DomInfo.CpuTime)
 	s.SetBlockStats(domStats[0].Block)
 	s.SetInterfaceValue(domStats[0].Net)
 }
