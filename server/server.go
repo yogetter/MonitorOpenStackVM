@@ -1,7 +1,6 @@
 package main
 
 import (
-	//libvirt "github.com/libvirt/libvirt-go"
 	"MonitorOpenStackVM/tool"
 	"encoding/json"
 	"github.com/streadway/amqp"
@@ -18,7 +17,7 @@ type server struct {
 
 func (s *server) init() {
 	//read config
-	file, _ := os.Open("json/rabbitmq.json")
+	file, _ := os.Open("../json/rabbitmq.json")
 	decoder := json.NewDecoder(file)
 	err := decoder.Decode(s)
 	CheckError(err)
@@ -29,24 +28,11 @@ func (s *server) init() {
 
 }
 
-//func RefreshDomain(conn *libvirt.Connect) {
-//	tmpDoms, err := conn.ListAllDomains(libvirt.CONNECT_LIST_DOMAINS_ACTIVE)
-//	CheckError(err)
-//	doms = tmpDoms
-//}
-//
 func CheckError(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
 }
-
-var influx DB
-var tool OpenStackTool
-
-//var doms []libvirt.Domain
-//var VMs []instance
-//var tmp []instance
 
 func ChInit(ch *amqp.Channel) <-chan amqp.Delivery {
 	err := ch.ExchangeDeclare(
@@ -95,17 +81,18 @@ func DataSplit(VmUsage string) []string {
 
 func InsertToInflux(VmUsage string) {
 	InsertData := DataSplit(VmUsage)
-	log.Println(InsertData)
+	influx.InsertVmInfo(InsertData)
 }
 
+var influx DB
+var t tool.OpenStackTool
+var check CheckInstance
+
 func main() {
-	log.Println(" DeBug1 ")
 	influx = DB{}
 	influx.Init()
-	log.Println(" DeBug2 ")
-	tool = OpenStackTool{}
-	tool.Init(&influx)
-	log.Println(" DeBug3 ")
+	t = tool.OpenStackTool{}
+	t.Init()
 
 	config := server{}
 	config.init()
@@ -120,7 +107,7 @@ func main() {
 	msgs := ChInit(ch)
 	log.Println(" [*] Waiting for messages. To exit press CTRL+C")
 	for d := range msgs {
-		tool.CheckStart()
+		check.CheckStart(&t, &influx)
 		log.Println("Received a mesage: ", string(d.Body))
 		InsertToInflux(string(d.Body))
 	}
