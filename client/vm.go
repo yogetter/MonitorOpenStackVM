@@ -70,8 +70,9 @@ func (s instance) GetValue() []string {
 		tmpData := "Uuid:" + s.Id + ";" + "Name:" + s.Name + ";" + "MemTotal:" + strconv.FormatInt(s.MemTotal, 10) +
 			";" + "MemUsed:" + strconv.FormatInt(s.MemUsed, 10) + ";" + "MemUnUsed:" + strconv.FormatInt(s.MemUnUsed, 10) +
 			";" + "CPU:" + strconv.FormatFloat(s.CpuUsage, 'f', -1, 64) + ";" + "Rx:" + strconv.FormatUint(s.NetStats[0].RxBytes, 10) +
-			";" + "Tx:" + strconv.FormatUint(s.NetStats[0].TxBytes, 10) + ";" + "BkWr:" + strconv.FormatUint(Block.WrBytes, 10) +
-			";" + "BkRd:" + strconv.FormatUint(Block.RdBytes, 10)
+			";" + "Tx:" + strconv.FormatUint(s.NetStats[0].TxBytes, 10) + ";" + "BkDev:" + Block.Name +
+			";" + "BkWr:" + strconv.FormatUint(Block.WrBytes, 10) + ";" + "BkRd:" + strconv.FormatUint(Block.RdBytes, 10) +
+			";" + "BkTotal:" + strconv.FormatUint(Block.Capacity, 10)
 		data = append(data, tmpData)
 	}
 	return data
