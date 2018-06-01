@@ -18,13 +18,10 @@ func CheckError(err error) {
 type OpenStackTool struct {
 	OS_AUTH_URL   string
 	NOVA_ENDPOINT string
-	influx        DB
-	InstancesInDB [][]interface{}
-	InstancesLive []string
 }
 
-func (o *OpenStackTool) Init(influx *DB) {
-	data, _ := os.Open("json/openstack_conf.json")
+func (o *OpenStackTool) Init() {
+	data, _ := os.Open("../json/openstack_conf.json")
 	decoder := json.NewDecoder(data)
 	err := decoder.Decode(o)
 	CheckError(err)
@@ -44,7 +41,7 @@ func (o *OpenStackTool) GetUrl(catalog interface{}) {
 
 func (o *OpenStackTool) GetToken() string {
 	var ResponseData interface{}
-	data, _ := os.Open("json/user_info.json")
+	data, _ := os.Open("../json/user_info.json")
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", o.OS_AUTH_URL+":5000/v3/auth/tokens", data)
 	CheckError(err)
@@ -64,13 +61,6 @@ func (o *OpenStackTool) IoRead(r *http.Response, f *interface{}) {
 	CheckError(err)
 
 }
-func (o *OpenStackTool) InsertInstance(res_data []interface{}) []string {
-	var tmp []string
-	for _, value := range res_data {
-		tmp = append(tmp, value.(map[string]interface{})["id"].(string))
-	}
-	return tmp
-}
 func (o *OpenStackTool) GetInstances() []interface{} {
 	var tmp interface{}
 	token := o.GetToken()
@@ -81,42 +71,6 @@ func (o *OpenStackTool) GetInstances() []interface{} {
 	res, err := client.Do(req)
 	defer res.Body.Close()
 	o.IoRead(res, &tmp)
-	res_data := tmp.(map[string]interface{})["servers"].([]interface{})
-	return res_data
-}
-
-func (o *OpenStackTool) DeleteData() {
-	// Found ID should be delete
-	flag := true
-	for _, data1 := range o.InstancesInDB {
-		for _, data2 := range o.InstancesLive {
-			if data1[1] == data2 {
-				flag = false
-				log.Println("same:", data1)
-				break
-			}
-		}
-		if flag {
-			log.Println("Delete id:", data1)
-			log.Println("influx Url:", o.influx.Url)
-			o.influx.QueryInfo("'"+data1[1].(string)+"'", "drop series where uuid = ")
-		}
-		flag = true
-	}
-}
-func (o *OpenStackTool) QueryData() {
-	tmp_data := o.influx.QueryInfo("uuid", "show tag values from vm_usage with key = ")
-	if tmp_data[0].Series != nil {
-		//log.Println("Tmp_data:", tmp_data[0], "value:", tmp_data[0].Series)
-		o.InstancesInDB = tmp_data[0].Series[0].Values
-	}
-}
-
-func (o *OpenStackTool) CheckStart() {
-	InstanceData := o.GetInstances()
-	o.InstancesLive = o.InsertInstance(InstanceData)
-	o.QueryData()
-	log.Println("InDb:", o.InstancesInDB)
-	log.Println("Live:", o.InstancesLive)
-	o.DeleteData()
+	ServerData := tmp.(map[string]interface{})["servers"].([]interface{})
+	return ServerData
 }
