@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	libvirt "github.com/libvirt/libvirt-go"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -19,6 +20,7 @@ type instance struct {
 	NetStats   []libvirt.DomainStatsNet
 	BlockStats []libvirt.DomainStatsBlock
 	dom        *libvirt.Domain
+	Hostname   string
 }
 
 func (s *instance) GetName() {
@@ -67,7 +69,7 @@ func (s *instance) SetInterfaceValue(Net []libvirt.DomainStatsNet) {
 func (s instance) GetValue() []string {
 	var data []string
 	for _, Block := range s.BlockStats {
-		tmpData := "Uuid:" + s.Id + ";" + "Name:" + s.Name + ";" + "MemTotal:" + strconv.FormatInt(s.MemTotal, 10) +
+		tmpData := "Hostname:" + s.Hostname + ";" + "Uuid:" + s.Id + ";" + "Name:" + s.Name + ";" + "MemTotal:" + strconv.FormatInt(s.MemTotal, 10) +
 			";" + "MemUsed:" + strconv.FormatInt(s.MemUsed, 10) + ";" + "MemUnUsed:" + strconv.FormatInt(s.MemUnUsed, 10) +
 			";" + "CPU:" + strconv.FormatFloat(s.CpuUsage, 'f', -1, 64) + ";" + "Rx:" + strconv.FormatUint(s.NetStats[0].RxBytes, 10) +
 			";" + "Tx:" + strconv.FormatUint(s.NetStats[0].TxBytes, 10) + ";" + "BkDev:" + Block.Name +
@@ -108,6 +110,8 @@ func (s *instance) SetAllValue(tmp instance) {
 
 func (s *instance) InitAllValue(dom *libvirt.Domain, domStats []libvirt.DomainStats) {
 	DomInfo, err := dom.GetInfo()
+	CheckError(err)
+	s.Hostname, err = os.Hostname()
 	CheckError(err)
 	s.dom = dom
 	s.SetVcpuNumber()

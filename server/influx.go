@@ -11,6 +11,7 @@ import (
 )
 
 type instance struct {
+	Hostname  string
 	Uuid      string
 	Name      string
 	MemTotal  string
@@ -32,8 +33,6 @@ type DB struct {
 	Password string
 }
 
-var Hostname string
-
 func toInt(input string) int64 {
 	r, err := strconv.ParseInt(input, 10, 64)
 	CheckError(err)
@@ -51,8 +50,6 @@ func (d *DB) Init() {
 	decoder := json.NewDecoder(file)
 	err := decoder.Decode(d)
 	CheckError(err)
-	Hostname, err = os.Hostname()
-	CheckError(err)
 	log.Println("DB URL:", d.Url)
 	log.Println("DB Name:", d.Db)
 	log.Println("DB Username:", d.Username)
@@ -63,7 +60,9 @@ func (d *DB) InitVmInfo(data []string) instance {
 	VM := instance{}
 	for _, d := range data {
 		tmpData := strings.Split(d, ":")
-		if tmpData[0] == "Uuid" {
+		if tmpData[0] == "Hostname" {
+			VM.Hostname = tmpData[1]
+		} else if tmpData[0] == "Uuid" {
 			VM.Uuid = tmpData[1]
 		} else if tmpData[0] == "Name" {
 			VM.Name = tmpData[1]
@@ -107,7 +106,7 @@ func (d *DB) InsertVmInfo(data []string) {
 	})
 	CheckError(err)
 	// Create a point and add to batch
-	tags := map[string]string{"uuid": VM.Uuid, "Name": VM.Name, "Hostname": Hostname, "BkDev": VM.BkDev}
+	tags := map[string]string{"uuid": VM.Uuid, "Name": VM.Name, "Hostname": VM.Hostname, "BkDev": VM.BkDev}
 	fields := map[string]interface{}{
 		"Total":    toInt(VM.MemTotal),
 		"Used":     toInt(VM.MemUsed),
