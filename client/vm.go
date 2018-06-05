@@ -97,7 +97,6 @@ func (s instance) PrintValue() {
 }
 func (s *instance) SetAllValue(tmp instance) {
 	usedTime := (s.CpuTime - tmp.CpuTime) / 1000
-	fmt.Println("start:", s.CpuTime, "end:", tmp.CpuTime, "result:", usedTime)
 	s.CpuUsage = float64(usedTime) / float64((60 * 1000000 * s.VcpuNumber))
 	s.CpuUsage *= 100
 	s.NetStats[0].RxBytes = (s.NetStats[0].RxBytes - tmp.NetStats[0].RxBytes) / 60
