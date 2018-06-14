@@ -21,9 +21,9 @@ func (s *server) init() {
 	decoder := json.NewDecoder(file)
 	err := decoder.Decode(s)
 	CheckError(err)
-	log.Println("DB URL:", s.Url)
-	log.Println("DB Username:", s.Username)
-	log.Println("DB Password:", s.Password)
+	log.Println("Rabbitmq URL:", s.Url)
+	log.Println("Rabbitmq Username:", s.Username)
+	log.Println("Rabbitmq Password:", s.Password)
 	file.Close()
 
 }
