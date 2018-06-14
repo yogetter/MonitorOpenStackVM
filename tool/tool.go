@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"bytes"
+	"strconv"
 )
 
 func CheckError(err error) {
@@ -41,11 +43,13 @@ func (o *OpenStackTool) GetUrl(catalog interface{}) {
 
 func (o *OpenStackTool) GetToken() string {
 	var ResponseData interface{}
-	data, _ := os.Open("../json/user_info.json")
+	tmpData, _ := ioutil.ReadFile("../json/user_info.json")
+	data := bytes.NewReader(tmpData)
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", o.OS_AUTH_URL+":5000/v3/auth/tokens", data)
 	CheckError(err)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Length", strconv.FormatInt(req.ContentLength, 10))
 	res, err := client.Do(req)
 	defer res.Body.Close()
 	o.IoRead(res, &ResponseData)
@@ -57,6 +61,7 @@ func (o *OpenStackTool) GetToken() string {
 func (o *OpenStackTool) IoRead(r *http.Response, f *interface{}) {
 	body, err := ioutil.ReadAll(r.Body)
 	dec := json.NewDecoder(strings.NewReader(string(body)))
+        log.Println("Debug", string(body))
 	err = dec.Decode(f)
 	CheckError(err)
 
