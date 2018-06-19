@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/streadway/amqp"
-	libvirt "github.com/yogetter/libvirt-go"
+	"github.com/yogetter/libvirt-go"
 	"log"
 	"os"
 	"time"

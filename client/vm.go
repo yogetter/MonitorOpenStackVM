@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	libvirt "github.com/libvirt/libvirt-go"
+	"github.com/yogetter/libvirt-go"
 	"os"
 	"strconv"
 	"strings"
