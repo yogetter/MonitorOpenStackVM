@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	libvirt "github.com/libvirt/libvirt-go"
 	"github.com/streadway/amqp"
+	libvirt "github.com/yogetter/libvirt-go"
 	"log"
 	"os"
 	"time"
