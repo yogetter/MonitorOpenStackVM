@@ -62,8 +62,12 @@ func (s *instance) SetMemValue() {
 }
 
 func (s *instance) SetInterfaceValue(Net []libvirt.DomainStatsNet) {
-	s.NetStats = make([]libvirt.DomainStatsNet, len(Net))
-	s.NetStats = Net
+	if len(Net) == 0 {
+		s.NetStats = make([]libvirt.DomainStatsNet, 1)
+	} else {
+		s.NetStats = make([]libvirt.DomainStatsNet, len(Net))
+		s.NetStats = Net
+	}
 }
 
 func (s instance) GetValue() []string {
@@ -82,7 +86,7 @@ func (s instance) GetValue() []string {
 }
 
 func (s instance) PrintValue() {
-	fmt.Println("VM：")
+	fmt.Println("VM:")
 	fmt.Println("Uuid: ", s.Id)
 	fmt.Println("Name: ", s.Name)
 	fmt.Println("MemTotal: ", strconv.FormatInt(s.MemTotal, 10))
